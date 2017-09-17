@@ -67,6 +67,8 @@ class GenerateFinalFrame(object):
         print("Rozpoczynam generowanie spotkań", end="...")
 
         per_meet = int(len(self.matched)/count)
+        rest = int(len(self.matched)%count)
+
         if per_meet == 0:
             per_meet = 1
 
@@ -93,14 +95,18 @@ class GenerateFinalFrame(object):
 
                 if self.matched:
                     file.setFont('Arial', 10)
-                    file.drawString(100, self.y, "{number}. {first} - {second}".format(number=day+1,
-                                                                                       first=self.matched[0][0],
-                                                                                       second=self.matched[0][1]))
+                    file.drawString(100, self.y, "{first} - {second}".format(first=self.matched[0][0],
+                                                                             second=self.matched[0][1]))
                     self.y -= 10
                     self.matched.pop(0)
                 else:
                     break
-
+            if rest > 0:
+                file.drawString(100, self.y, "{first} - {second}".format(first=self.matched[0][0],
+                                                                         second=self.matched[0][1]))
+                self.y -= 10
+                self.matched.pop(0)
+                rest -= 1
 
         if self.matched:
             self.y -= 20
