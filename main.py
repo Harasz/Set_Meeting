@@ -43,6 +43,7 @@ class GenerateFinalFrame(object):
 
     matched = []
     y = 725
+    file = object
 
     def __init__(self, data):
         self.data = data
@@ -53,6 +54,11 @@ class GenerateFinalFrame(object):
         self.matched = list(itertools.combinations(self.data, 2))
         shuffle(self.matched)
 
+    def check_page(self):
+        if self.y <= 40:
+            self.file.showPage()
+            self.y = 750
+
     def decay(self):
         from reportlab.pdfgen import canvas
         from reportlab.pdfbase import pdfmetrics
@@ -61,49 +67,47 @@ class GenerateFinalFrame(object):
 
         pdfmetrics.registerFont(TTFont('Arial', 'Arial.ttf'))
 
-        file = canvas.Canvas("Rozpiska_sptokań.pdf", pagesize=letter)
+        self.file = canvas.Canvas("Rozpiska_sptokań.pdf", pagesize=letter)
 
         count = int(input("Ile spotkań zaplanowano? "))
-        print("Rozpoczynam generowanie spotkań", end="...")
+        print("Rozpoczynam generowanie spotkań")
 
         per_meet = int(len(self.matched)/count)
-        rest = int(len(self.matched)%count)
-
+        rest = 0
+        if not count > len(self.matched):
+            rest = int(len(self.matched) % count)
+        print(rest)
         if per_meet == 0:
             per_meet = 1
 
-        file.setFont('Arial', 22)
-        file.drawCentredString(letter[0] / 2.0, 750, "Rozpiska spotkań kółka szachowego")
-        file.setFont('Arial', 10)
-        file.drawCentredString(letter[0] / 2.0, 735, "Opiekun: Rafał Kamiński")
+        self.file.setFont('Arial', 22)
+        self.file.drawCentredString(letter[0] / 2.0, 750, "Rozpiska spotkań kółka szachowego")
+        self.file.setFont('Arial', 10)
+        self.file.drawCentredString(letter[0] / 2.0, 735, "Opiekun: Rafał Kamiński")
 
         for meet in range(count):
             self.y -= 30
 
-            if self.y <= 40:
-                file.showPage()
-                self.y = 750
+            self.check_page()
 
-            file.setFont('Arial', 12)
-            file.drawString(50, self.y, "Spotkanie numer: {}".format(meet+1))
+            self.file.setFont('Arial', 12)
+            self.file.drawString(50, self.y, "Spotkanie numer: {}".format(meet+1))
             self.y -= 20
             for day in range(per_meet):
 
-                if self.y <= 40:
-                    file.showPage()
-                    self.y = 750
+                self.check_page()
 
                 if self.matched:
-                    file.setFont('Arial', 10)
-                    file.drawString(100, self.y, "{first} - {second}".format(first=self.matched[0][0],
-                                                                             second=self.matched[0][1]))
+                    self.file.setFont('Arial', 10)
+                    self.file.drawString(100, self.y, "{first} - {second}".format(first=self.matched[0][0],
+                                                                                  second=self.matched[0][1]))
                     self.y -= 10
                     self.matched.pop(0)
                 else:
                     break
-            if rest > 0:
-                file.drawString(100, self.y, "{first} - {second}".format(first=self.matched[0][0],
-                                                                         second=self.matched[0][1]))
+            if rest > 0 and self.matched:
+                self.file.drawString(100, self.y, "{first} - {second}".format(first=self.matched[0][0],
+                                                                              second=self.matched[0][1]))
                 self.y -= 10
                 self.matched.pop(0)
                 rest -= 1
@@ -111,37 +115,31 @@ class GenerateFinalFrame(object):
         if self.matched:
             self.y -= 20
 
-            if self.y <= 40:
-                file.showPage()
-                self.y = 750
+            self.check_page()
 
-            file.setFont('Arial', 12)
-            file.drawString(50, self.y, "Mecze do samodzielnego rozdania:")
+            self.file.setFont('Arial', 12)
+            self.file.drawString(50, self.y, "Mecze do samodzielnego rozdania:")
             for rest in self.matched:
                 self.y -= 20
-                if self.y <= 40:
-                    file.showPage()
-                    self.y = 750
-                file.setFont('Arial', 10)
-                file.drawString(100, self.y, "{first} - {second}".format(first=rest[0],
-                                                                         second=rest[1]))
+                self.check_page()
+                self.file.setFont('Arial', 10)
+                self.file.drawString(100, self.y, "{first} - {second}".format(first=rest[0],
+                                                                              second=rest[1]))
 
-        file.setFont('Arial', 6)
+        self.file.setFont('Arial', 6)
         self.y -= 50
 
-        if self.y <= 40:
-            file.showPage()
-            self.y = 750
+        self.check_page()
 
-        file.drawString(350, self.y, "Wygenerowane przez 'SetMeeting' by Jakub Sydor")
+        self.file.drawString(350, self.y, "Wygenerowane przez 'SetMeeting' by Jakub Sydor")
         print("Gotowe!")
         print("Zakończono generowanie rozkładu spotkań")
         try:
-            file.save()
+            self.file.save()
         except PermissionError:
             print("Nie można zapisać rozpiski do pliku."
                   "Upewnij się, że możesz tworzyć nowe pliki, oraz że plik istnieje i nikt go nie używa.")
-            exit(4)
+            sys.exit(4)
 
 
 
@@ -152,13 +150,13 @@ class ReadUsersFile(object):
     data = []
 
     def __init__(self):
-        print("Wczytywanie pliku z uczestnikami...", end=' ')
+        print("Wczytywanie pliku z uczestnikami...")
         try:
             self.file = open(sys.argv[1], 'r').read()
         except Exception as er:
             print("Błąd!")
             print("Wystąpił błąd podczas ładowania pliku: {}".format(er))
-            exit(1)
+            sys.exit(1)
         print("Gotowe!")
         self.read_file()
         GenerateFinalFrame(self.data)
@@ -172,7 +170,7 @@ class ReadUsersFile(object):
                 print("Błędny zapis jednego z uczestników.")
                 answear = input("Kontynuować generowanie listy? [T/n]")
                 if answear.lower() == 'n':
-                    exit(2)
+                    sys.exit(2)
                 else:
                     continue
             self.data.append("{name} {surname} ({klass})".format(name=meta[0], surname=meta[1], klass=meta[2]))
@@ -183,7 +181,6 @@ if __name__ == '__main__':
     # Sprawdzanie czy argument został podany
     if len(sys.argv) < 2:
         print("Użycie: {} <list_z_uczestnikami>".format(sys.argv[0]))
-        # print("Podaj ścieżkę do listy uczestników jako argument.")
-        exit(0)
+        sys.exit(0)
     else:
         ReadUsersFile()
