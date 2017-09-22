@@ -37,22 +37,58 @@ from random import shuffle
 import itertools
 
 
+class GenerateXlsxFile(object):
+
+    """Generowanie pliku .Xlxs z wynikami"""
+
+    normal_format = object
+
+    def __init__(self, data):
+        import xlsxwriter
+        self.data = data
+        print("Tworzenie pliku .xlsx")
+        try:
+            self.excel = xlsxwriter.Workbook("Zestawienie_spotkań.xlsx")
+            self.worksheet = self.excel.add_worksheet("Kolko_szchowe")
+        except Exception as er:
+            print("Błąd przy tworzeniu pliku: {}".format(er))
+            sys.exit()
+        self.ready_file()
+        self.enter_matches()
+        self.excel.close()
+        print("Gotwe!")
+
+    def ready_file(self):
+        self.worksheet.set_column(0, 0, 60)
+        self.worksheet.set_column(1, 2, 30)
+        bold_format = self.excel.add_format({'bold': 1, 'border': 1})
+        self.normal_format = self.excel.add_format({'border': 1})
+        self.worksheet.merge_range('A1:C4', 'Tabela z wynikami rozgrywek kolka szchowego',
+                                   self.excel.add_format({'bold': 1, 'border': 1,
+                                                          'align': 'center', 'valign': 'vcenter',
+                                                          'fg_color': '#808080'}))
+        self.worksheet.write('A5', 'Rozgrywki', bold_format)
+        self.worksheet.write('B5', 'Wynik', bold_format)
+        self.worksheet.write('C5', 'Notatka', bold_format)
+
+    def enter_matches(self):
+        count = 5
+        for match in self.data:
+            self.worksheet.write(count, 0, match[0]+" - "+match[1], self.normal_format)
+            count += 1
+
+
 class GenerateFinalFrame(object):
 
     """Zestawianie graczy i generowanie wstępnych rozkładów."""
 
-    matched = []
     y = 725
     file = object
 
     def __init__(self, data):
-        self.data = data
-        self.match()
+        self.matched = data
         self.decay()
 
-    def match(self):
-        self.matched = list(itertools.combinations(self.data, 2))
-        shuffle(self.matched)
 
     def check_page(self):
         if self.y <= 40:
@@ -69,6 +105,7 @@ class GenerateFinalFrame(object):
 
         self.file = canvas.Canvas("Rozpiska_sptokań.pdf", pagesize=letter)
 
+
         count = int(input("Ile spotkań zaplanowano? "))
         print("Rozpoczynam generowanie spotkań")
 
@@ -76,7 +113,6 @@ class GenerateFinalFrame(object):
         rest = 0
         if not count > len(self.matched):
             rest = int(len(self.matched) % count)
-        print(rest)
         if per_meet == 0:
             per_meet = 1
 
@@ -148,6 +184,7 @@ class ReadUsersFile(object):
     """Czytanie listy i wczytywanie uczestników"""
 
     data = []
+    matched = list
 
     def __init__(self):
         print("Wczytywanie pliku z uczestnikami...")
@@ -159,8 +196,9 @@ class ReadUsersFile(object):
             sys.exit(1)
         print("Gotowe!")
         self.read_file()
-        GenerateFinalFrame(self.data)
-
+        self.match()
+        GenerateXlsxFile(self.matched)
+        GenerateFinalFrame(self.matched)
 
     def read_file(self):
         user_list = self.file.splitlines()
@@ -174,6 +212,10 @@ class ReadUsersFile(object):
                 else:
                     continue
             self.data.append("{name} {surname} ({klass})".format(name=meta[0], surname=meta[1], klass=meta[2]))
+
+    def match(self):
+        self.matched = list(itertools.combinations(self.data, 2))
+        shuffle(self.matched)
 
 
 if __name__ == '__main__':
