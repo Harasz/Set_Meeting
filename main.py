@@ -59,22 +59,23 @@ class GenerateXlsxFile(object):
         print("Gotwe!")
 
     def ready_file(self):
-        self.worksheet.set_column(0, 0, 60)
-        self.worksheet.set_column(1, 2, 30)
-        bold_format = self.excel.add_format({'bold': 1, 'border': 1})
+        self.worksheet.set_column(0, 3, 30)
+        bold_format = self.excel.add_format({'bold': 1, 'border': 1, 'align': 'center', 'valign': 'vcenter'})
         self.normal_format = self.excel.add_format({'border': 1})
-        self.worksheet.merge_range('A1:C4', 'Tabela z wynikami rozgrywek kolka szchowego',
+        self.worksheet.merge_range('A1:D4', 'Tabela z wynikami rozgrywek kółka szchowego',
                                    self.excel.add_format({'bold': 1, 'border': 1,
                                                           'align': 'center', 'valign': 'vcenter',
-                                                          'fg_color': '#808080'}))
-        self.worksheet.write('A5', 'Rozgrywki', bold_format)
-        self.worksheet.write('B5', 'Wynik', bold_format)
-        self.worksheet.write('C5', 'Notatka', bold_format)
+                                                          'fg_color': '#808080', 'font_size': 16}))
+        self.worksheet.write('A5', 'Zawodnik #1', bold_format)
+        self.worksheet.write('B5', 'Zawodnik #2', bold_format)
+        self.worksheet.write('C5', 'Wynik', bold_format)
+        self.worksheet.write('D5', 'Notatka', bold_format)
 
     def enter_matches(self):
         count = 5
         for match in self.data:
-            self.worksheet.write(count, 0, match[0]+" - "+match[1], self.normal_format)
+            self.worksheet.write(count, 0, match[0], self.normal_format)
+            self.worksheet.write(count, 1, match[1], self.normal_format)
             count += 1
 
 
@@ -189,7 +190,7 @@ class ReadUsersFile(object):
     def __init__(self):
         print("Wczytywanie pliku z uczestnikami...")
         try:
-            self.file = open(sys.argv[1], 'r').read()
+            self.file = open(sys.argv[1]).read()
         except Exception as er:
             print("Błąd!")
             print("Wystąpił błąd podczas ładowania pliku: {}".format(er))
@@ -220,6 +221,8 @@ class ReadUsersFile(object):
 
 if __name__ == '__main__':
     import sys
+
+
     # Sprawdzanie czy argument został podany
     if len(sys.argv) < 2:
         print("Użycie: {} <list_z_uczestnikami>".format(sys.argv[0]))
